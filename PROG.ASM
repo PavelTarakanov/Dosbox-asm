@@ -43,6 +43,21 @@ even_len:
 		mov es:byte ptr[bx], 0bbh
 		mov es:byte ptr[bx+1], 4ch	;right upper corner
 
+		mov cx, dx
+		sub bx, cx
+		sub bx, cx
+		add bx, 320
+
+		sub bx, 2
+		mov es:byte ptr[bx], 0c8h
+		mov es:byte ptr[bx+1], 4ch
+		add bx, 2					;left lower corner
+
+		call print_horisontal_frame
+
+		mov es:byte ptr[bx], 0bch
+		mov es:byte ptr[bx+1], 4ch	;right lower corner
+
 		mov ax, 4c00h		;end of programm
 		int 21h
 ;-------------------------------------------------------------------------------
