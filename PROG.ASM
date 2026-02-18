@@ -91,7 +91,10 @@ print_letter:
 		endp
 ;------------------------------------------------------------------------------
 ;Prints horisontal phrame starts in bx
-
+;Entry: es:[bx] --> place to start horisontal phrame
+;	cx       =  line len
+;Exit; 		    NO EXIT
+;Destr: bx, cx	
 ;--------------------------------------------------------------------------------
 print_horisontal_frame:
 		mov es:byte ptr[bx], 0cdh
