@@ -16,11 +16,18 @@ start:
 		sub cx, 3
 
 		mov si, 84h			;basic command len beginning
+
+		mov al, 4eh
+		mov bp, 4eh			;basic colour
+
 		cmp byte ptr ds:[82h], '0'
 		je basic_way
 
-		add si, 8		;command len begin if special way
-		sub cx, 8		;cx = phrase len
+		mov di, 84h
+		call read_colour	;phrase colour in al
+
+		mov bp, ax			;phrase colour in bp
+		call read_colour	;frame colour in al
 
 basic_way:
 		mov dx, 80 		;center of line
@@ -33,21 +40,6 @@ even_len:
 
 		add bx, dx
 		mov dx, cx		;saved cx(command line len) in dx
-
-		mov al, 4eh
-		mov bp, 4eh
-
-		cmp byte ptr ds:[82h], '0'
-		je basic_colour
-
-		mov di, 84h
-		call read_colour	;phrase colour in al
-
-		mov bp, ax			;phrase colour in bp
-		mov di, 88h
-		call read_colour	;frame colour in al
-
-basic_colour:
 
 		call print_str
 
@@ -88,11 +80,11 @@ end_of_programm:
 ;Prints command line with start in es:[bx] and left and right frame of phrase
 ;Entry:	es:[bx] --> place to write command line
 ;	    cx       = command line len
-;		si 		--> start of command line
+;		di 		--> start of command line
 ;		bp		 = phrase colour
 ;		al       = frame colour
 ;Exit:            = NO EXIT
-;Destr:  si,
+;Destr:  di,
 ;-------------------------------------------------------------------------------
 print_str:
 		sub bx, 2
@@ -103,11 +95,11 @@ print_str:
 		push ax
 
 print_letter:
-		mov al, [si]
+		mov al, [di]
 		mov es:byte ptr[bx], al
 		mov es:word ptr[bx+1], bp
 		add bx, 2
-		inc si
+		inc di
 		loop print_letter		;print phrase
 
 		pop ax
@@ -140,9 +132,11 @@ print_horisontal_frame:
 ;--------------------------------------------------------------------
 read_colour:
 		mov ax, 0		;zero colour code
-		push cx
-		push dx
-		mov cx, 10
+
+		mov dx, 10
+
+new_number:
+		mul dx
 
 		cmp ds:byte ptr[di], '0'
 		jb end_of_programm
@@ -151,32 +145,16 @@ read_colour:
 
 		add al, ds:byte ptr[di]
 		sub al, '0'
-		mul cx
 
 		inc di
-		mov cx, 10
+		dec cx
+		mov dx, 10
 
-		cmp ds:byte ptr[di], '0'
-		jb end_of_programm
-		cmp ds:byte ptr[di], '9'
-		ja end_of_programm
+		cmp ds:byte ptr[di], ' '
+		jne new_number
 
-		add al, ds:byte ptr[di]
-		sub al, '0'
-		mul cx
-
-		inc di
-
-		cmp ds:byte ptr[di], '0'
-		jb end_of_programm
-		cmp ds:byte ptr [di], '9'
-		ja end_of_programm
-
-		add al, ds:byte ptr [di]
-		sub al, '0'
-
-		pop dx
-		pop cx
+		dec cx
+		inc di 			;ignore ' '
 
 		ret
 		endp
