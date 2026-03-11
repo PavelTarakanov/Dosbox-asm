@@ -7,22 +7,22 @@ VIDEOSEG equ 0b800h
 Start:			;//TODO после метки End и прыгать туда
 	mov ax, 3509h   			;new one
 	int 21h
-	mov Old09Ofs, bx
+	mov Old09Ofs, bx			;old func offset in old09ofs
 	mov bx, es
-	mov Old09Seg, bx
+	mov Old09Seg, bx			;old func segment in old09seg
 
 	push 0
-	pop es
+	pop es						;zero seg
 
-	cli
+	cli							;stop interrupt handler
 	mov bx, 09h * 4
-	mov es:[bx], offset My09Int
+	mov es:[bx], offset My09Int	;new func offset
 
 	mov ax, cs
-	mov es:[bx+2], ax
-	sti
+	mov es:[bx+2], ax			;new func segment
+	sti							;continue interrupt handler
 
-	mov ax, 3100h
+	mov ax, 3100h				;interrupt with saving in memory
 
 	mov dx, offset EndOfProgram ;16 bytes
 	shr dx, 4   				;1  byte
@@ -34,28 +34,28 @@ Start:			;//TODO после метки End и прыгать туда
 ;
 ;--------------------------------------------------------------------------
 My09Int proc
-	push ax bx es
+	push ax bx es				;save
 
 	push VIDEOSEG
 	pop es						;videoseg address in es
 
-	in al, 60h
+	in al, 60h					;keyboard sygnal in ax
 
-	push ax
+	push ax						;save ax
 
-	cmp al, 36h
+	cmp al, 36h					;if shift
 	jne no_reg_open
 	call reg_frame				;//TODO 8 прерывание
 
 no_reg_open:
 
-	cmp al, 1ch
+	cmp al, 1ch					;if enter
 	jne no_reg_close
 	;call delete_reg_frame
 
 no_reg_close:
 
-	pop ax
+	pop ax						;keyboard sygnal in ax
 
 	or al, 80h
 	out 61h, al
@@ -67,11 +67,9 @@ no_reg_close:
 
 	pop es bx ax
 
-	db 0eah    ;JMP FAR
-	Old09Ofs dw 0   ;new one
+	db 0eah   					;JMP FAR
+	Old09Ofs dw 0
 	Old09Seg dw 0
-
-	dd 90909090h
 
 	endp
 ;-------------------------------------------------------------------------
@@ -150,38 +148,6 @@ delete_reg_frame proc
 
 		ret
 		endp
-;------------------------------------------------------------------------------
-;Prints horisontal phrame starts in bx
-;Entry: es:[bx] --> place to start horisontal phrame
-;		cx       =  line len
-;		al		 = frame colour
-;Exit:		    NO EXIT
-;Destr: bx, cx
-;--------------------------------------------------------------------------------
-print_horisontal_frame proc
-		mov es:byte ptr[bx], 0cdh
-		mov es:byte ptr[bx+1], al
-		add bx, 2
-		loop print_horisontal_frame
-		ret
-		endp
-;---------------------------------------------------------------------
-;------------------------------------------------------------------------------
-;Prints vertical frame starts in bx
-;Entry: es:[bx] --> place to start horisontal phrame
-;		cx       =  line len
-;		al		 = frame colour
-;Exit:		    NO EXIT
-;Destr: bx, cx
-;--------------------------------------------------------------------------------
-print_vertical_frame proc
-		mov es:byte ptr[bx], 0bah
-		mov es:byte ptr[bx+1], al
-		add bx, 160
-		loop print_vertical_frame
-		ret
-		endp
-;---------------------------------------------------------------------
 ;---------------------------------------------------------------------
 ;Prints horisontal line with special left and right symbol, begin in bx
 ;Entry: es:[bx] --> place to start line
