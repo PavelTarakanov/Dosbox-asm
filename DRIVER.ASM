@@ -4,34 +4,11 @@ org 100h
 
 VIDEOSEG equ 0b800h
 
-Start:			;//TODO после метки End и прыгать туда
-	mov ax, 3509h   			;new one
-	int 21h
-	mov Old09Ofs, bx			;old func offset in old09ofs
-	mov bx, es
-	mov Old09Seg, bx			;old func segment in old09seg
-
-	push 0
-	pop es						;zero seg
-
-	cli							;stop interrupt handler
-	mov bx, 09h * 4
-	mov es:[bx], offset My09Int	;new func offset
-
-	mov ax, cs
-	mov es:[bx+2], ax			;new func segment
-	sti							;continue interrupt handler
-
-	mov ax, 3100h				;interrupt with saving in memory
-
-	mov dx, offset EndOfProgram ;16 bytes
-	shr dx, 4   				;1  byte
-	inc dx
-
-	int 21h    					;until now: drivers init code
+Start:
+	call new_driver
 ;-------------------------------------------------------------------------
-;
-;
+;My 09 interrupt. Activate frame if shift,
+;No entry or exit
 ;--------------------------------------------------------------------------
 My09Int proc
 	push ax bx es				;save
@@ -45,13 +22,13 @@ My09Int proc
 
 	cmp al, 36h					;if shift
 	jne no_reg_open
-	call reg_frame				;//TODO 8 прерывание
+	mov TIMER_FRAME_FLAG, 1 ;print frame
 
 no_reg_open:
 
 	cmp al, 1ch					;if enter
 	jne no_reg_close
-	;call delete_reg_frame
+	mov TIMER_FRAME_FLAG, 0 	;delete frame
 
 no_reg_close:
 
@@ -63,13 +40,40 @@ no_reg_close:
 	out 61h, al   				;replace header bite (0 to 1, 1 to 0)
 
 	mov al, 20h
-	out 20h, al
+	out 20h, al					;say that interrupt finished
 
 	pop es bx ax
 
 	db 0eah   					;JMP FAR
 	Old09Ofs dw 0
 	Old09Seg dw 0
+
+	endp
+;--------------------------------------------------------------------------
+;My 08 interrupt. Prints frame if flag is 1
+;Entry: TIMER_FRAME_FLAG = flag of writing frame
+;No exit
+;--------------------------------------------------------------------------
+My08Int proc
+
+	push VIDEOSEG
+	pop es						;videoseg address in es
+
+	cmp TIMER_FRAME_FLAG, 1		;if need frame
+	jne no_frame
+
+	cli
+	call reg_frame				;print frame
+	sti
+
+no_frame:
+
+	mov al, 20h
+	out 20h, al					;say that interrupt finished
+
+	db 0eah   					;JMP FAR
+	Old08Ofs dw 0
+	Old08Seg dw 0
 
 	endp
 ;-------------------------------------------------------------------------
@@ -288,6 +292,54 @@ one_digit:
 		endp
 ;---------------------------------------------------------------------
 EndOfProgram:
+TIMER_FRAME_FLAG db 0
 hexadecimal_digits db '0123456789abcdef'
+;---------------------------------------------------------------------
+;Moves address of new function to old place and saves old
+;function address
+;Entry: no entry
+;Exit:  Old09Ofs --> old func offset
+;		Old09Seg --> old func segment
+;Destr: ax, bx, dx, es
+;---------------------------------------------------------------------
+new_driver proc
+	mov ax, 3509h   			;new one
+	int 21h
+	mov ds:Old09Ofs, bx			;old func offset in old09ofs
+	mov bx, es
+	mov ds:Old09Seg, bx			;old func segment in old09seg
 
+	mov ax, 3508h   			;new one
+	int 21h
+	mov ds:Old08Ofs, bx			;old func offset in old08ofs
+	mov bx, es
+	mov ds:Old08Seg, bx			;old func segment in old08seg
+
+	push 0
+	pop es						;zero seg
+
+	cli							;stop interrupt handler
+	mov bx, 09h * 4
+	mov es:[bx], offset My09Int	;new func offset
+
+	mov ax, cs
+	mov es:[bx+2], ax			;new func segment
+
+	mov bx, 08h * 4
+	mov es:[bx], offset My08Int	;new func offset
+
+	mov ax, cs
+	mov es:[bx+2], ax			;new func segment
+	sti							;continue interrupt handler
+
+	mov ax, 3100h				;interrupt with saving in memory
+
+	mov dx, offset EndOfProgram ;16 bytes
+	shr dx, 4   				;1  byte
+	inc dx
+
+	int 21h    					;until now: drivers init code
+
+	endp
+;---------------------------------------------------------------------
 end Start
