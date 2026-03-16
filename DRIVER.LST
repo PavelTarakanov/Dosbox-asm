@@ -1,4 +1,4 @@
-Turbo Assembler	 Version 4.1	    03/15/26 13:25:26	    Page 1
+Turbo Assembler	 Version 4.1	    03/15/26 13:50:11	    Page 1
 driver.asm
 
 
@@ -10,7 +10,7 @@ driver.asm
       5	      =B800		     VIDEOSEG equ 0b800h
       6
       7	0100			     Start:
-      8	0100  E8 01C9			     call new_driver
+      8	0100  E8 01C8			     call new_driver
       9				     ;-------------------------------------------------------------------------
      10				     ;My 09 interrupt. Activate	frame if shift,
      11				     ;No entry or exit
@@ -26,15 +26,15 @@ driver.asm
      21
      22	0113  50			     push ax					     ;save ax
      23
-     24	0114  3C 36			     cmp al, 36h				     ;if shift
+     24	0114  3C 36			     cmp al, 36h				     ;if right shift
      25	0116  75 06			     jne no_reg_open
-     26	0118  C6 06 02BBr 01 90		     mov TIMER_FRAME_FLAG, 1 ;print frame
+     26	0118  C6 06 02BAr 01 90		     mov TIMER_FRAME_FLAG, 1 ;print frame
      27
      28	011E			     no_reg_open:
      29
-     30	011E  3C 1C			     cmp al, 1ch				     ;if enter
+     30	011E  3C 2A			     cmp al, 2ah				     ;if left shift
      31	0120  75 06			     jne no_reg_close
-     32	0122  C6 06 02BBr 00 90		     mov TIMER_FRAME_FLAG, 0	     ;delete frame
+     32	0122  C6 06 02BAr 00 90		     mov TIMER_FRAME_FLAG, 0	     ;delete frame
      33
      34	0128			     no_reg_close:
      35
@@ -60,7 +60,7 @@ driver.asm
      55				     ;Entry: TIMER_FRAME_FLAG =	flag of	writing	frame
      56				     ;No exit
      57				     ;--------------------------------------------------------------------------
-Turbo Assembler	 Version 4.1	    03/15/26 13:25:26	    Page 2
+Turbo Assembler	 Version 4.1	    03/15/26 13:50:11	    Page 2
 driver.asm
 
 
@@ -71,7 +71,7 @@ driver.asm
      61	      B800 5D
      62	0147  07			     pop es					     ;videoseg address in es
      63
-     64	0148  80 3E 02BBr 01		     cmp TIMER_FRAME_FLAG, 1	     ;if need frame
+     64	0148  80 3E 02BAr 01		     cmp TIMER_FRAME_FLAG, 1	     ;if need frame
      65	014D  75 05			     jne no_frame
      66
      67	014F  FA			     cli
@@ -95,297 +95,288 @@ driver.asm
      85				     ;Destr: nothing
      86				     ;-------------------------------------------------------------------------
      87	015D			     reg_frame proc
-     88	015D  0E 16 06 1E 54 55	57+		     push cs ss	es ds sp bp di si dx cx	bx ax
+     88	015D  0E 16 06 1E 54 55	57+	     push cs ss	es ds sp bp di si dx cx	bx ax
      89	      56 52 51 53 50
      90
-     91	0169  BB 0120				     mov bx, 2*(2*80 - 16)
-     92	016C  B4 CD				     mov ah, 0cdh
-     93	016E  B0 1A				     mov al, 1ah
-     94	0170  B6 C9				     mov dh, 0c9h
-     95	0172  B2 1A				     mov dl, 1ah
-     96	0174  BE BB1A				     mov si, 0bb1ah
-     97	0177  B9 000B				     mov cx, 11				     ;upper horisontal frame
+     91	0169  BB 0120			     mov bx, 2*(2*80 - 16)
+     92	016C  B4 CD			     mov ah, 0cdh
+     93	016E  B0 1A			     mov al, 1ah
+     94	0170  B6 C9			     mov dh, 0c9h
+     95	0172  B2 1A			     mov dl, 1ah
+     96	0174  BE BB1A			     mov si, 0bb1ah
+     97	0177  B9 000B			     mov cx, 11				     ;upper horisontal frame
      98
-     99	017A  E8 0050				     call print_line
+     99	017A  E8 004F			     call print_line
     100
-    101	017D  32 E4				     xor ah, ah
-    102	017F  B6 BA				     mov dh, 0bah
-    103	0181  BE BA1A				     mov si, 0ba1ah		     ;prepare for central part
+    101	017D  32 E4			     xor ah, ah
+    102	017F  B6 BA			     mov dh, 0bah
+    103	0181  BE BA1A			     mov si, 0ba1ah		     ;prepare for central part
     104
-    105	0184  BF 000C				     mov di, 12				     ;frame high in di
+    105	0184  BF 000C			     mov di, 12				     ;frame high in di
     106
     107	0187			     central_part:
     108
-    109	0187  B9 000B				     mov cx, 11				     ;frame len
-    110	018A  81 C3 0088			     add bx, 2*80 - 12*2	     ;to new line
-    111	018E  E8 003C				     call print_line
-    112	0191  4F				     dec di
+    109	0187  B9 000B			     mov cx, 11				     ;frame len
+    110	018A  81 C3 0088		     add bx, 2*80 - 12*2	     ;to new line
+    111	018E  E8 003B			     call print_line
+    112	0191  4F			     dec di
     113
-    114	0192  83 FF 00				     cmp di, 0
-Turbo Assembler	 Version 4.1	    03/15/26 13:25:26	    Page 3
+    114	0192  83 FF 00			     cmp di, 0
+Turbo Assembler	 Version 4.1	    03/15/26 13:50:11	    Page 3
 driver.asm
 
 
 
-    115	0195  77 F0				     ja	central_part		     ;central part print
+    115	0195  77 F0			     ja	central_part		     ;central part print
     116
-    117	0197  81 C3 0088			     add bx, 2*80 - 12*2	     ;new line
-    118	019B  B4 CD				     mov ah, 0cdh
-    119	019D  B6 C8				     mov dh, 0c8h
-    120	019F  BE BC1A				     mov si, 0bc1ah
-    121	01A2  B9 000B				     mov cx, 11				     ;prepare for lower	horisontal frame
+    117	0197  81 C3 0088		     add bx, 2*80 - 12*2	     ;new line
+    118	019B  B4 CD			     mov ah, 0cdh
+    119	019D  B6 C8			     mov dh, 0c8h
+    120	019F  BE BC1A			     mov si, 0bc1ah
+    121	01A2  B9 000B			     mov cx, 11				     ;prepare for lower	horisontal frame
     122
-    123	01A5  E8 0025				     call print_line		     ;lower horisontal frame
+    123	01A5  E8 0024			     call print_line		     ;lower horisontal frame
     124
-    125	01A8  E8 0042				     call print_reg_names
+    125	01A8  E8 0041			     call print_reg_names
     126
-    127	01AB  B9 000C				     mov cx, 12					     ;number of	lines
-    128	01AE  BB 01CA				     mov bx, 2*(3*80-11)		     ;equals place
+    127	01AB  B9 000C			     mov cx, 12					     ;number of	lines
+    128	01AE  BB 01CA			     mov bx, 2*(3*80-11)		     ;equals place
     129
     130	01B1			     print_equals:
     131
-    132	01B1  26: C6 07	3D			     mov es:byte ptr[bx], '='	     ;print '='
-    133	01B5  81 C3 00A0			     add bx, 2*80			     ;new line
+    132	01B1  26: C6 07	3D		     mov es:byte ptr[bx], '='	     ;print '='
+    133	01B5  81 C3 00A0		     add bx, 2*80			     ;new line
     134
-    135	01B9  E2 F6				     loop print_equals
+    135	01B9  E2 F6			     loop print_equals
     136
-    137	01BB  B9 000C				     mov cx, 12					     ;number of	regs
-    138	01BE  BB 01CE				     mov bx, 2*(3*80-9)			     ;place for	reg
+    137	01BB  B9 000C			     mov cx, 12					     ;number of	regs
+    138	01BE  BB 01CE			     mov bx, 2*(3*80-9)			     ;place for	reg
     139
     140	01C1			     regs_values:
-    141	01C1  58				     pop ax					     ;reg value	in ax
-    142	01C2  E8 00D1				     call print_reg_value
-    143	01C5  81 C3 00A0			     add bx, 160				     ;new str
-    144	01C9  E2 F6				     loop regs_values
+    141	01C1  58			     pop ax					     ;reg value	in ax
+    142	01C2  E8 00D0			     call print_reg_value
+    143	01C5  81 C3 00A0		     add bx, 160				     ;new str
+    144	01C9  E2 F6			     loop regs_values
     145
-    146	01CB  C3				     ret
-    147	01CC					     endp
+    146	01CB  C3			     ret
+    147	01CC				     endp
     148				     ;-------------------------------------------------------------------------
-    149				     ;Deletes regs frame
-    150				     ;Entry: NO	ENTRY
-    151				     ;Exit:  NO	EXIT
-    152				     ;Destr:
-    153				     ;-------------------------------------------------------------------------
-    154	01CC			     delete_reg_frame proc
-    155
-    156	01CC  C3				     ret
-    157	01CD					     endp
-    158				     ;---------------------------------------------------------------------
-    159				     ;Prints horisontal	line with special left and right symbol, begin in bx
-    160				     ;Entry: es:[bx] --> place to start	line
-    161				     ;		     ah		      =	 symbol	for central part
-    162				     ;		     al		      =	 colour	for central part
-    163				     ;		     dh		      =	 symbol	for left part
-    164				     ;		     dl		      =	 colour	for left part
-    165				     ;		     cx		      =	 central part len
-    166				     ;		     si		      =	 right symbol and colour
-    167				     ;Exit:
-    168				     ;Destr:
-    169				     ;---------------------------------------------------------------------
-    170	01CD			     print_line	proc
-    171	01CD  26: 88 37				     mov es:byte ptr[bx], dh
-Turbo Assembler	 Version 4.1	    03/15/26 13:25:26	    Page 4
+    149				     ;Prints horisontal	line with special left and right symbol, begin in bx
+    150				     ;Entry: es:[bx] --> place to start	line
+    151				     ;		     ah		      =	 symbol	for central part
+    152				     ;		     al		      =	 colour	for central part
+    153				     ;		     dh		      =	 symbol	for left part
+    154				     ;		     dl		      =	 colour	for left part
+    155				     ;		     cx		      =	 central part len
+    156				     ;		     si		      =	 right symbol and colour
+    157				     ;Exit:
+    158				     ;Destr:
+    159				     ;---------------------------------------------------------------------
+    160	01CC			     print_line	proc
+    161	01CC  26: 88 37				     mov es:byte ptr[bx], dh
+    162	01CF  26: 88 57	01			     mov es:byte ptr[bx+1], dl	     ;prints left symbol
+    163
+    164	01D3  83 C3 02				     add bx, 2
+    165
+    166	01D6			     print_central_part:
+    167
+    168	01D6  26: 88 27				     mov es:byte ptr[bx], ah
+    169	01D9  26: 88 47	01			     mov es:byte ptr[bx+1], al
+    170	01DD  83 C3 02				     add bx, 2
+    171	01E0  E2 F4				     loop print_central_part	     ;prints central part of line
+Turbo Assembler	 Version 4.1	    03/15/26 13:50:11	    Page 4
 driver.asm
 
 
 
-    172	01D0  26: 88 57	01			     mov es:byte ptr[bx+1], dl	     ;prints left symbol
-    173
-    174	01D4  83 C3 02				     add bx, 2
-    175
-    176	01D7			     print_central_part:
+    172
+    173	01E2  8B D6				     mov dx, si					     ;right symbol and colour in dx
+    174
+    175	01E4  26: 88 37				     mov es:byte ptr[bx], dh
+    176	01E7  26: 88 57	01			     mov es:byte ptr[bx+1], dl	     ;prints right symbol
     177
-    178	01D7  26: 88 27				     mov es:byte ptr[bx], ah
-    179	01DA  26: 88 47	01			     mov es:byte ptr[bx+1], al
-    180	01DE  83 C3 02				     add bx, 2
-    181	01E1  E2 F4				     loop print_central_part	     ;prints central part of line
-    182
-    183	01E3  8B D6				     mov dx, si					     ;right symbol and colour in dx
-    184
-    185	01E5  26: 88 37				     mov es:byte ptr[bx], dh
-    186	01E8  26: 88 57	01			     mov es:byte ptr[bx+1], dl	     ;prints right symbol
+    178	01EB  C3				     ret
+    179	01EC					     endp
+    180				     ;---------------------------------------------------------------------
+    181				     ;Print reg	names
+    182				     ;Entry: NO	ENTRY
+    183				     ;Exit:  NO	EXIT
+    184				     ;Destr: bx
+    185				     ;---------------------------------------------------------------------
+    186	01EC			     print_reg_names proc
     187
-    188	01EC  C3				     ret
-    189	01ED					     endp
-    190				     ;---------------------------------------------------------------------
-    191				     ;Print reg	names
-    192				     ;Entry: NO	ENTRY
-    193				     ;Exit:  NO	EXIT
-    194				     ;Destr: bx
-    195				     ;---------------------------------------------------------------------
-    196	01ED			     print_reg_names proc
+    188	01EC  BB 01C4				     mov bx, 2*(80*3-14)
+    189	01EF  26: C6 07	61			     mov es:byte ptr[bx], 'a'
+    190	01F3  83 C3 02				     add bx, 2
+    191	01F6  26: C6 07	78			     mov es:byte ptr[bx], 'x'	     ;print ax name
+    192
+    193	01FA  BB 0264				     mov bx, 2*(80*4-14)
+    194	01FD  26: C6 07	62			     mov es:byte ptr[bx], 'b'
+    195	0201  83 C3 02				     add bx, 2
+    196	0204  26: C6 07	78			     mov es:byte ptr[bx], 'x'	     ;print bx name
     197
-    198	01ED  BB 01C4				     mov bx, 2*(80*3-14)
-    199	01F0  26: C6 07	61			     mov es:byte ptr[bx], 'a'
-    200	01F4  83 C3 02				     add bx, 2
-    201	01F7  26: C6 07	78			     mov es:byte ptr[bx], 'x'	     ;print ax name
+    198	0208  BB 0304				     mov bx, 2*(80*5-14)
+    199	020B  26: C6 07	63			     mov es:byte ptr[bx], 'c'
+    200	020F  83 C3 02				     add bx, 2
+    201	0212  26: C6 07	78			     mov es:byte ptr[bx], 'x'	     ;print cx name
     202
-    203	01FB  BB 0264				     mov bx, 2*(80*4-14)
-    204	01FE  26: C6 07	62			     mov es:byte ptr[bx], 'b'
-    205	0202  83 C3 02				     add bx, 2
-    206	0205  26: C6 07	78			     mov es:byte ptr[bx], 'x'	     ;print bx name
+    203	0216  BB 03A4				     mov bx, 2*(80*6-14)
+    204	0219  26: C6 07	64			     mov es:byte ptr[bx], 'd'
+    205	021D  83 C3 02				     add bx, 2
+    206	0220  26: C6 07	78			     mov es:byte ptr[bx], 'x'	     ;print dx name
     207
-    208	0209  BB 0304				     mov bx, 2*(80*5-14)
-    209	020C  26: C6 07	63			     mov es:byte ptr[bx], 'c'
-    210	0210  83 C3 02				     add bx, 2
-    211	0213  26: C6 07	78			     mov es:byte ptr[bx], 'x'	     ;print cx name
+    208	0224  BB 0444				     mov bx, 2*(80*7-14)
+    209	0227  26: C6 07	73			     mov es:byte ptr[bx], 's'
+    210	022B  83 C3 02				     add bx, 2
+    211	022E  26: C6 07	69			     mov es:byte ptr[bx], 'i'	     ;print si name
     212
-    213	0217  BB 03A4				     mov bx, 2*(80*6-14)
-    214	021A  26: C6 07	64			     mov es:byte ptr[bx], 'd'
-    215	021E  83 C3 02				     add bx, 2
-    216	0221  26: C6 07	78			     mov es:byte ptr[bx], 'x'	     ;print dx name
+    213	0232  BB 04E4				     mov bx, 2*(80*8-14)
+    214	0235  26: C6 07	64			     mov es:byte ptr[bx], 'd'
+    215	0239  83 C3 02				     add bx, 2
+    216	023C  26: C6 07	69			     mov es:byte ptr[bx], 'i'	     ;print di name
     217
-    218	0225  BB 0444				     mov bx, 2*(80*7-14)
-    219	0228  26: C6 07	73			     mov es:byte ptr[bx], 's'
-    220	022C  83 C3 02				     add bx, 2
-    221	022F  26: C6 07	69			     mov es:byte ptr[bx], 'i'	     ;print si name
+    218	0240  BB 0584				     mov bx, 2*(80*9-14)
+    219	0243  26: C6 07	62			     mov es:byte ptr[bx], 'b'
+    220	0247  83 C3 02				     add bx, 2
+    221	024A  26: C6 07	70			     mov es:byte ptr[bx], 'p'	     ;print bp name
     222
-    223	0233  BB 04E4				     mov bx, 2*(80*8-14)
-    224	0236  26: C6 07	64			     mov es:byte ptr[bx], 'd'
-    225	023A  83 C3 02				     add bx, 2
-    226	023D  26: C6 07	69			     mov es:byte ptr[bx], 'i'	     ;print di name
+    223	024E  BB 0624				     mov bx, 2*(80*10-14)
+    224	0251  26: C6 07	73			     mov es:byte ptr[bx], 's'
+    225	0255  83 C3 02				     add bx, 2
+    226	0258  26: C6 07	70			     mov es:byte ptr[bx], 'p'	     ;print sp name
     227
-    228	0241  BB 0584				     mov bx, 2*(80*9-14)
-Turbo Assembler	 Version 4.1	    03/15/26 13:25:26	    Page 5
+    228	025C  BB 06C4				     mov bx, 2*(80*11-14)
+Turbo Assembler	 Version 4.1	    03/15/26 13:50:11	    Page 5
 driver.asm
 
 
 
-    229	0244  26: C6 07	62			     mov es:byte ptr[bx], 'b'
-    230	0248  83 C3 02				     add bx, 2
-    231	024B  26: C6 07	70			     mov es:byte ptr[bx], 'p'	     ;print bp name
+    229	025F  26: C6 07	64			     mov es:byte ptr[bx], 'd'
+    230	0263  83 C3 02				     add bx, 2
+    231	0266  26: C6 07	73			     mov es:byte ptr[bx], 's'	     ;print ds name
     232
-    233	024F  BB 0624				     mov bx, 2*(80*10-14)
-    234	0252  26: C6 07	73			     mov es:byte ptr[bx], 's'
-    235	0256  83 C3 02				     add bx, 2
-    236	0259  26: C6 07	70			     mov es:byte ptr[bx], 'p'	     ;print sp name
+    233	026A  BB 0764				     mov bx, 2*(80*12-14)
+    234	026D  26: C6 07	65			     mov es:byte ptr[bx], 'e'
+    235	0271  83 C3 02				     add bx, 2
+    236	0274  26: C6 07	73			     mov es:byte ptr[bx], 's'	     ;print es name
     237
-    238	025D  BB 06C4				     mov bx, 2*(80*11-14)
-    239	0260  26: C6 07	64			     mov es:byte ptr[bx], 'd'
-    240	0264  83 C3 02				     add bx, 2
-    241	0267  26: C6 07	73			     mov es:byte ptr[bx], 's'	     ;print ds name
+    238	0278  BB 0804				     mov bx, 2*(80*13-14)
+    239	027B  26: C6 07	73			     mov es:byte ptr[bx], 's'
+    240	027F  83 C3 02				     add bx, 2
+    241	0282  26: C6 07	73			     mov es:byte ptr[bx], 's'	     ;print ss name
     242
-    243	026B  BB 0764				     mov bx, 2*(80*12-14)
-    244	026E  26: C6 07	65			     mov es:byte ptr[bx], 'e'
-    245	0272  83 C3 02				     add bx, 2
-    246	0275  26: C6 07	73			     mov es:byte ptr[bx], 's'	     ;print es name
+    243	0286  BB 08A4				     mov bx, 2*(80*14-14)
+    244	0289  26: C6 07	63			     mov es:byte ptr[bx], 'c'
+    245	028D  83 C3 02				     add bx, 2
+    246	0290  26: C6 07	73			     mov es:byte ptr[bx], 's'	     ;print cs name
     247
-    248	0279  BB 0804				     mov bx, 2*(80*13-14)
-    249	027C  26: C6 07	73			     mov es:byte ptr[bx], 's'
-    250	0280  83 C3 02				     add bx, 2
-    251	0283  26: C6 07	73			     mov es:byte ptr[bx], 's'	     ;print ss name
-    252
-    253	0287  BB 08A4				     mov bx, 2*(80*14-14)
-    254	028A  26: C6 07	63			     mov es:byte ptr[bx], 'c'
-    255	028E  83 C3 02				     add bx, 2
-    256	0291  26: C6 07	73			     mov es:byte ptr[bx], 's'	     ;print cs name
-    257
-    258	0295  C3				     ret
-    259	0296					     endp
-    260				     ;---------------------------------------------------------------------
-    261				     ;Prints reg values
-    262				     ;Entry: es:[bx] --> place to print	reg value
-    263				     ;		     ax		      =	 reg value
-    264				     ;Exit:  NO	EXIT
-    265				     ;Destr: dx, si
-    266				     ;---------------------------------------------------------------------
-    267	0296			     print_reg_value proc
-    268	0296  51				     push cx
-    269
-    270	0297  B9 0004				     mov cx, 4
-    271	029A  83 C3 06				     add bx, 6
-    272
-    273	029D			     one_digit:
-    274	029D  33 D2				     xor dx, dx
-    275
-    276	029F  53				     push bx
-    277	02A0  BB 0010				     mov bx, 16
+    248	0294  C3				     ret
+    249	0295					     endp
+    250				     ;---------------------------------------------------------------------
+    251				     ;Prints reg values
+    252				     ;Entry: es:[bx] --> place to print	reg value
+    253				     ;		     ax		      =	 reg value
+    254				     ;Exit:  NO	EXIT
+    255				     ;Destr: dx, si
+    256				     ;---------------------------------------------------------------------
+    257	0295			     print_reg_value proc
+    258	0295  51				     push cx
+    259
+    260	0296  B9 0004				     mov cx, 4
+    261	0299  83 C3 06				     add bx, 6
+    262
+    263	029C			     one_digit:
+    264	029C  33 D2				     xor dx, dx
+    265
+    266	029E  53				     push bx
+    267	029F  BB 0010				     mov bx, 16
+    268
+    269	02A2  F7 F3				     div bx
+    270
+    271	02A4  BE 02BBr				     lea si, hexadecimal_digits
+    272	02A7  03 F2				     add si, dx
+    273	02A9  2E: 8A 14				     mov dl, cs:[si]
+    274
+    275	02AC  5B				     pop bx
+    276	02AD  26: 88 17				     mov es:byte ptr[bx], dl
+    277	02B0  83 EB 02				     sub bx, 2
     278
-    279	02A3  F7 F3				     div bx
+    279	02B3  E2 E7				     loop one_digit
     280
-    281	02A5  BE 02BCr				     lea si, hexadecimal_digits
-    282	02A8  03 F2				     add si, dx
-    283	02AA  2E: 8A 14				     mov dl, cs:[si]
-    284
-    285	02AD  5B				     pop bx
-Turbo Assembler	 Version 4.1	    03/15/26 13:25:26	    Page 6
+    281	02B5  83 C3 02				     add bx, 2
+    282	02B8  59				     pop cx
+    283
+    284	02B9  C3				     ret
+    285	02BA					     endp
+Turbo Assembler	 Version 4.1	    03/15/26 13:50:11	    Page 6
 driver.asm
 
 
 
-    286	02AE  26: 88 17				     mov es:byte ptr[bx], dl
-    287	02B1  83 EB 02				     sub bx, 2
-    288
-    289	02B4  E2 E7				     loop one_digit
-    290
-    291	02B6  83 C3 02				     add bx, 2
-    292	02B9  59				     pop cx
-    293
-    294	02BA  C3				     ret
-    295	02BB					     endp
-    296				     ;---------------------------------------------------------------------
-    297	02BB			     EndOfProgram:
-    298	02BB  00		     TIMER_FRAME_FLAG db 0
-    299	02BC  30 31 32 33 34 35	36+  hexadecimal_digits	db '0123456789abcdef'
-    300	      37 38 39 61 62 63	64+
-    301	      65 66
-    302				     ;---------------------------------------------------------------------
-    303				     ;Moves address of new function to old place and saves old
-    304				     ;function address
-    305				     ;Entry: no	entry
-    306				     ;Exit:  Old09Ofs --> old func offset
-    307				     ;		     Old09Seg --> old func segment
-    308				     ;Destr: ax, bx, dx, es
-    309				     ;---------------------------------------------------------------------
-    310	02CC			     new_driver	proc
-    311	02CC  B8 3509			     mov ax, 3509h			     ;new one
-    312	02CF  CD 21			     int 21h
-    313	02D1  2E: 89 1E	0139r		     mov cs:Old09Ofs, bx		     ;old func offset in old09ofs
-    314	02D6  8C C3			     mov bx, es
-    315	02D8  2E: 89 1E	013Br		     mov cs:Old09Seg, bx		     ;old func segment in old09seg
+    286				     ;---------------------------------------------------------------------
+    287	02BA			     EndOfProgram:
+    288	02BA  00		     TIMER_FRAME_FLAG db 0
+    289	02BB  30 31 32 33 34 35	36+  hexadecimal_digits	db '0123456789abcdef'
+    290	      37 38 39 61 62 63	64+
+    291	      65 66
+    292				     ;---------------------------------------------------------------------
+    293				     ;Moves address of new function to old place and saves old
+    294				     ;function address
+    295				     ;Entry: no	entry
+    296				     ;Exit:  Old09Ofs --> old func offset
+    297				     ;		     Old09Seg --> old func segment
+    298				     ;Destr: ax, bx, dx, es
+    299				     ;---------------------------------------------------------------------
+    300	02CB			     new_driver	proc
+    301	02CB  B8 3509			     mov ax, 3509h			     ;new one
+    302	02CE  CD 21			     int 21h
+    303	02D0  89 1E 0139r		     mov Old09Ofs, bx			     ;old func offset in old09ofs
+    304	02D4  8C C3			     mov bx, es
+    305	02D6  89 1E 013Br		     mov Old09Seg, bx			     ;old func segment in old09seg
+    306
+    307	02DA  B8 3508			     mov ax, 3508h			     ;new one
+    308	02DD  CD 21			     int 21h
+    309	02DF  89 1E 0159r		     mov Old08Ofs, bx			     ;old func offset in old08ofs
+    310	02E3  8C C3			     mov bx, es
+    311	02E5  89 1E 015Br		     mov Old08Seg, bx			     ;old func segment in old08seg
+    312
+    313	02E9  50 55 8B EC C7 46	02+	     push 0
+    314	      0000 5D
+    315	02F3  07			     pop es					     ;zero seg
     316
-    317	02DD  B8 3508			     mov ax, 3508h			     ;new one
-    318	02E0  CD 21			     int 21h
-    319	02E2  2E: 89 1E	0159r		     mov cs:Old08Ofs, bx		     ;old func offset in old08ofs
-    320	02E7  8C C3			     mov bx, es
-    321	02E9  2E: 89 1E	015Br		     mov cs:Old08Seg, bx		     ;old func segment in old08seg
-    322
-    323	02EE  50 55 8B EC C7 46	02+	     push 0
-    324	      0000 5D
-    325	02F8  07			     pop es					     ;zero seg
+    317	02F4  FA			     cli						     ;stop interrupt handler
+    318	02F5  BB 0024			     mov bx, 09h * 4
+    319	02F8  26: C7 07	0103r		     mov es:[bx], offset My09Int     ;new func offset
+    320
+    321	02FD  8C C8			     mov ax, cs
+    322	02FF  26: 89 47	02		     mov es:[bx+2], ax			     ;new func segment
+    323
+    324	0303  BB 0020			     mov bx, 08h * 4
+    325	0306  26: C7 07	013Dr		     mov es:[bx], offset My08Int     ;new func offset
     326
-    327	02F9  FA			     cli						     ;stop interrupt handler
-    328	02FA  BB 0024			     mov bx, 09h * 4
-    329	02FD  26: C7 07	0103r		     mov es:[bx], offset My09Int     ;new func offset
+    327	030B  8C C8			     mov ax, cs
+    328	030D  26: 89 47	02		     mov es:[bx+2], ax			     ;new func segment
+    329	0311  FB			     sti						     ;continue interrupt handler
     330
-    331	0302  8C C8			     mov ax, cs
-    332	0304  26: 89 47	02		     mov es:[bx+2], ax			     ;new func segment
-    333
-    334	0308  BB 0020			     mov bx, 08h * 4
-    335	030B  26: C7 07	013Dr		     mov es:[bx], offset My08Int     ;new func offset
-    336
-    337	0310  8C C8			     mov ax, cs
-    338	0312  26: 89 47	02		     mov es:[bx+2], ax			     ;new func segment
-    339	0316  FB			     sti						     ;continue interrupt handler
+    331	0312  B8 3100			     mov ax, 3100h			     ;interrupt	with saving in memory
+    332
+    333	0315  BA 02BAr			     mov dx, offset EndOfProgram ;16 bytes
+    334	0318  83 C2 0F			     add dx, 15
+    335	031B  D1 EA D1 EA D1 EA	D1+	     shr dx, 4				     ;1	 byte
+    336	      EA
+    337	0323  42			     inc dx
+    338
+    339	0324  CD 21			     int 21h					     ;until now: drivers init code
     340
-    341	0317  B8 3100			     mov ax, 3100h			     ;interrupt	with saving in memory
-    342
-Turbo Assembler	 Version 4.1	    03/15/26 13:25:26	    Page 7
+    341	0326				     endp
+    342				     ;---------------------------------------------------------------------
+Turbo Assembler	 Version 4.1	    03/15/26 13:50:11	    Page 7
 driver.asm
 
 
 
-    343	031A  BA 02BBr			     mov dx, offset EndOfProgram ;16 bytes
-    344	031D  D1 EA D1 EA D1 EA	D1+	     shr dx, 4				     ;1	 byte
-    345	      EA
-    346	0325  42			     inc dx
-    347
-    348	0326  CD 21			     int 21h					     ;until now: drivers init code
-    349
-    350	0328				     endp
-    351				     ;---------------------------------------------------------------------
-    352				     end Start
-Turbo Assembler	 Version 4.1	    03/15/26 13:25:26	    Page 8
+    343				     end Start
+Turbo Assembler	 Version 4.1	    03/15/26 13:50:11	    Page 8
 Symbol Table
 
 
@@ -395,7 +386,7 @@ Symbol Name			  Type	 Value
 
 ??DATE				  Text	 "03/15/26"
 ??FILENAME			  Text	 "driver  "
-??TIME				  Text	 "13:25:26"
+??TIME				  Text	 "13:50:11"
 ??VERSION			  Number 040A
 @32BIT				  Text	 0
 @CODE				  Text	 DGROUP
@@ -410,12 +401,11 @@ Symbol Name			  Type	 Value
 @STACK				  Text	 DGROUP
 @WORDSIZE			  Text	 2
 CENTRAL_PART			  Near	 DGROUP:0187
-DELETE_REG_FRAME		  Near	 DGROUP:01CC
-ENDOFPROGRAM			  Near	 DGROUP:02BB
-HEXADECIMAL_DIGITS		  Byte	 DGROUP:02BC
+ENDOFPROGRAM			  Near	 DGROUP:02BA
+HEXADECIMAL_DIGITS		  Byte	 DGROUP:02BB
 MY08INT				  Near	 DGROUP:013D
 MY09INT				  Near	 DGROUP:0103
-NEW_DRIVER			  Near	 DGROUP:02CC
+NEW_DRIVER			  Near	 DGROUP:02CB
 NO_FRAME			  Near	 DGROUP:0154
 NO_REG_CLOSE			  Near	 DGROUP:0128
 NO_REG_OPEN			  Near	 DGROUP:011E
@@ -423,21 +413,21 @@ OLD08OFS			  Word	 DGROUP:0159
 OLD08SEG			  Word	 DGROUP:015B
 OLD09OFS			  Word	 DGROUP:0139
 OLD09SEG			  Word	 DGROUP:013B
-ONE_DIGIT			  Near	 DGROUP:029D
-PRINT_CENTRAL_PART		  Near	 DGROUP:01D7
+ONE_DIGIT			  Near	 DGROUP:029C
+PRINT_CENTRAL_PART		  Near	 DGROUP:01D6
 PRINT_EQUALS			  Near	 DGROUP:01B1
-PRINT_LINE			  Near	 DGROUP:01CD
-PRINT_REG_NAMES			  Near	 DGROUP:01ED
-PRINT_REG_VALUE			  Near	 DGROUP:0296
+PRINT_LINE			  Near	 DGROUP:01CC
+PRINT_REG_NAMES			  Near	 DGROUP:01EC
+PRINT_REG_VALUE			  Near	 DGROUP:0295
 REGS_VALUES			  Near	 DGROUP:01C1
 REG_FRAME			  Near	 DGROUP:015D
 START				  Near	 DGROUP:0100
-TIMER_FRAME_FLAG		  Byte	 DGROUP:02BB
+TIMER_FRAME_FLAG		  Byte	 DGROUP:02BA
 VIDEOSEG			  Number B800
 
 Groups & Segments		  Bit Size Align  Combine Class
 
 DGROUP				  Group
   _DATA				  16  0000 Word	  Public  DATA
-  _TEXT				  16  0328 Word	  Public  CODE
+  _TEXT				  16  0326 Word	  Public  CODE
 

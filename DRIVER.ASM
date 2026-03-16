@@ -20,13 +20,13 @@ My09Int proc
 
 	push ax						;save ax
 
-	cmp al, 36h					;if shift
+	cmp al, 36h					;if right shift
 	jne no_reg_open
 	mov TIMER_FRAME_FLAG, 1 ;print frame
 
 no_reg_open:
 
-	cmp al, 1ch					;if enter
+	cmp al, 2ah					;if left shift
 	jne no_reg_close
 	mov TIMER_FRAME_FLAG, 0 	;delete frame
 
@@ -83,76 +83,66 @@ no_frame:
 ;Destr: nothing
 ;-------------------------------------------------------------------------
 reg_frame proc
-		push cs ss es ds sp bp di si dx cx bx ax
+	push cs ss es ds sp bp di si dx cx bx ax
 
-		mov bx, 2*(2*80 - 16)
-		mov ah, 0cdh
-		mov al, 1ah
-		mov dh, 0c9h
-		mov dl, 1ah
-		mov si, 0bb1ah
-		mov cx, 11				;upper horisontal frame
+	mov bx, 2*(2*80 - 16)
+	mov ah, 0cdh
+	mov al, 1ah
+	mov dh, 0c9h
+	mov dl, 1ah
+	mov si, 0bb1ah
+	mov cx, 11				;upper horisontal frame
 
-		call print_line
+	call print_line
 
-		xor ah, ah
-		mov dh, 0bah
-		mov si, 0ba1ah			;prepare for central part
+	xor ah, ah
+	mov dh, 0bah
+	mov si, 0ba1ah			;prepare for central part
 
-		mov di, 12				;frame high in di
+	mov di, 12				;frame high in di
 
 central_part:
 
-		mov cx, 11				;frame len
-		add bx, 2*80 - 12*2		;to new line
-		call print_line
-		dec di
+	mov cx, 11				;frame len
+	add bx, 2*80 - 12*2		;to new line
+	call print_line
+	dec di
 
-		cmp di, 0
-		ja central_part			;central part print
+	cmp di, 0
+	ja central_part			;central part print
 
-		add bx, 2*80 - 12*2		;new line
-		mov ah, 0cdh
-		mov dh, 0c8h
-		mov si, 0bc1ah
-		mov cx, 11				;prepare for lower horisontal frame
+	add bx, 2*80 - 12*2		;new line
+	mov ah, 0cdh
+	mov dh, 0c8h
+	mov si, 0bc1ah
+	mov cx, 11				;prepare for lower horisontal frame
 
-		call print_line			;lower horisontal frame
+	call print_line			;lower horisontal frame
 
-		call print_reg_names
+	call print_reg_names
 
-		mov cx, 12					;number of lines
-		mov bx, 2*(3*80-11)			;equals place
+	mov cx, 12					;number of lines
+	mov bx, 2*(3*80-11)			;equals place
 
 print_equals:
 
-		mov es:byte ptr[bx], '='	;print '='
-		add bx, 2*80				;new line
+	mov es:byte ptr[bx], '='	;print '='
+	add bx, 2*80				;new line
 
-		loop print_equals
+	loop print_equals
 
-		mov cx, 12					;number of regs
-		mov bx, 2*(3*80-9)			;place for reg
+	mov cx, 12					;number of regs
+	mov bx, 2*(3*80-9)			;place for reg
 
 regs_values:
-		pop ax						;reg value in ax
-		call print_reg_value
-		add bx, 160					;new str
-		loop regs_values
+	pop ax						;reg value in ax
+	call print_reg_value
+	add bx, 160					;new str
+	loop regs_values
 
-		ret
-		endp
+	ret
+	endp
 ;-------------------------------------------------------------------------
-;Deletes regs frame
-;Entry: NO ENTRY
-;Exit:  NO EXIT
-;Destr:
-;-------------------------------------------------------------------------
-delete_reg_frame proc
-
-		ret
-		endp
-;---------------------------------------------------------------------
 ;Prints horisontal line with special left and right symbol, begin in bx
 ;Entry: es:[bx] --> place to start line
 ;		ah		 =  symbol for central part
@@ -305,15 +295,15 @@ hexadecimal_digits db '0123456789abcdef'
 new_driver proc
 	mov ax, 3509h   			;new one
 	int 21h
-	mov ds:Old09Ofs, bx			;old func offset in old09ofs
+	mov Old09Ofs, bx			;old func offset in old09ofs
 	mov bx, es
-	mov ds:Old09Seg, bx			;old func segment in old09seg
+	mov Old09Seg, bx			;old func segment in old09seg
 
 	mov ax, 3508h   			;new one
 	int 21h
-	mov ds:Old08Ofs, bx			;old func offset in old08ofs
+	mov Old08Ofs, bx			;old func offset in old08ofs
 	mov bx, es
-	mov ds:Old08Seg, bx			;old func segment in old08seg
+	mov Old08Seg, bx			;old func segment in old08seg
 
 	push 0
 	pop es						;zero seg
@@ -335,6 +325,7 @@ new_driver proc
 	mov ax, 3100h				;interrupt with saving in memory
 
 	mov dx, offset EndOfProgram ;16 bytes
+	add dx, 15
 	shr dx, 4   				;1  byte
 	inc dx
 
